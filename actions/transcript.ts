@@ -2,18 +2,25 @@
 
 import { AzureKeyCredential, OpenAIClient } from "@azure/openai";
 
-async function transcript(prevState: any, formData: FormData) {
-  console.log(prevState);
-  if (!formData) return;
-
-  console.log(formData.get("audio"));
+async function transcript(formData: FormData) {
+  "use server";
   if (
     process.env.AZURE_API_KEY === undefined ||
     process.env.AZURE_ENDPOINT === undefined ||
     process.env.AZURE_DEPLOYMENT_NAME === undefined
   ) {
     console.error("Azure credentials not set");
+    return;
   }
+
+  const file = formData.get("audio") as File;
+  if (!file) {
+    console.error("No file provided");
+    return;
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const audio = new Uint8Array(arrayBuffer);
 
   console.log("== Transcribe Audio Sample ==");
 
@@ -22,26 +29,11 @@ async function transcript(prevState: any, formData: FormData) {
     new AzureKeyCredential(process.env.AZURE_API_KEY)
   );
 
-  var reader = new FileReader();
-
-  reader.onabort = () => console.log("file reading was aborted");
-  reader.onerror = () => console.log("file reading has failed");
-
-  reader.onload = async (e: ProgressEvent<FileReader>) => {
-    if (e.target?.result) {
-      const audio = e.target.result as string;
-
-      const result = await client.getAudioTranscription(
-        process.env.AZURE_DEPLOYMENT_NAME,
-        audio
-      );
-
-      console.log(`Transcription: ${result.text}`);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-
-  return true;
+  const result = await client.getAudioTranscription(
+    process.env.AZURE_DEPLOYMENT_NAME,
+    audio
+  );
+  console.log(`Transcription: ${result.text}`);
 }
 
 export default transcript;

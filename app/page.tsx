@@ -2,7 +2,7 @@
 
 import transcript from "@/actions/transcript";
 import SubmitButton from "@/components/SubmitButton";
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormState } from "react-dom";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { useRef } from "react";
 
@@ -23,7 +23,6 @@ export default function Home() {
     const audio = document.createElement("audio");
     audio.src = url;
     audio.controls = true;
-    document.body.appendChild(audio);
 
     // Create a File object from the Blob
     const file = new File([blob], "audio.webm", { type: blob.type });

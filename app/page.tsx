@@ -5,6 +5,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { useFormState } from "react-dom";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { useRef } from "react";
+import Recorder from "@/components/Recorder";
 
 const initialState = {
   message: "",
@@ -15,10 +16,11 @@ const initialState = {
 export default function Home() {
   const [state, formAction] = useFormState(transcript, initialState);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
 
   console.log("state", state);
 
-  const addAudioElement = (blob: Blob) => {
+  const uploadAudio = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
     const audio = document.createElement("audio");
     audio.src = url;
@@ -33,13 +35,18 @@ export default function Home() {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       fileRef.current.files = dataTransfer.files;
+
+      // Submit the form
+      if (submitButtonRef.current) {
+        submitButtonRef.current.click();
+      }
     }
   };
 
   return (
     <main className="p-24">
       <AudioRecorder
-        onRecordingComplete={addAudioElement}
+        onRecordingComplete={uploadAudio}
         audioTrackConstraints={{
           noiseSuppression: true,
           echoCancellation: true,
@@ -50,7 +57,10 @@ export default function Home() {
       <form action={formAction}>
         <input type="file" name="audio" ref={fileRef} />
 
+        <Recorder uploadAudio={uploadAudio} />
+
         <SubmitButton />
+        <button type="submit" hidden ref={submitButtonRef} />
       </form>
 
       {state.message && (

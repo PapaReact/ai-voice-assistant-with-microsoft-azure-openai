@@ -1,11 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
+import activeAssistantIcon from "@/img/active.gif";
+import notActiveAssistantIcon from "@/img/notactive.png";
+import { useFormStatus } from "react-dom";
 
 const mimeType = "audio/webm";
 
 function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const { pending } = useFormStatus();
 
   const [permission, setPermission] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -33,6 +38,8 @@ function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
   const startRecording = async () => {
     if (mediaRecorder === null || stream === null) return;
 
+    if (pending) return;
+
     setRecordingStatus("recording");
     //create new Media recorder instance using the stream
     const media = new MediaRecorder(stream, { mimeType: mimeType });
@@ -51,6 +58,8 @@ function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
 
   const stopRecording = () => {
     if (mediaRecorder.current === null) return;
+
+    if (pending) return;
 
     setRecordingStatus("inactive");
     //stops the recording instance
@@ -73,25 +82,44 @@ function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
           Get Microphone
         </button>
       ) : null}
+
       {permission && recordingStatus === "inactive" ? (
-        <button onClick={startRecording} type="button">
-          Start Recording
-        </button>
+        <Image
+          src={notActiveAssistantIcon}
+          alt="Not Recording"
+          width={500}
+          height={500}
+          onClick={startRecording}
+          priority={true}
+          className={`cursor-pointer 
+
+          ${
+            pending
+              ? "animate-pulse grayscale"
+              : "grayscale-0 hover:scale-110 duration-150 transition-all ease-in-out"
+          }`}
+        />
       ) : null}
       {recordingStatus === "recording" ? (
-        <button onClick={stopRecording} type="button">
-          Stop Recording
-        </button>
+        <Image
+          src={activeAssistantIcon}
+          alt="Recording"
+          width={500}
+          height={500}
+          onClick={stopRecording}
+          priority={true}
+          className="cursor-pointer hover:scale-110 duration-150 transition-all ease-in-out"
+        />
       ) : null}
 
-      {audio ? (
+      {/* {audio ? (
         <div className="audio-container">
           <audio src={audio} controls></audio>
           <a download href={audio}>
             Download Recording
           </a>
         </div>
-      ) : null}
+      ) : null} */}
     </div>
   );
 }

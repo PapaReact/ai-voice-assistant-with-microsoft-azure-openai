@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import activeAssistantIcon from "@/img/active.gif";
 import notActiveAssistantIcon from "@/img/notactive.png";
 import { useFormStatus } from "react-dom";
@@ -17,6 +17,10 @@ function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
   const [recordingStatus, setRecordingStatus] = useState("inactive");
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [audio, setAudio] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMicrophonePermission();
+  }, []);
 
   const getMicrophonePermission = async () => {
     if ("MediaRecorder" in window) {

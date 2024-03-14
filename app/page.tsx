@@ -3,8 +3,7 @@
 import transcript from "@/actions/transcript";
 import SubmitButton from "@/components/SubmitButton";
 import { useFormState } from "react-dom";
-import { AudioRecorder } from "react-audio-voice-recorder";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Recorder from "@/components/Recorder";
 import TextToSpeech from "@/components/TextToSpeech";
 
@@ -93,39 +92,30 @@ export default function Home() {
     };
   }, [state]);
 
-  const handleVoiceChange = (event) => {
+  const handleVoiceChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const voices = window.speechSynthesis.getVoices();
-    setVoice(voices.find((v) => v.name === event.target.value));
+    const voice = voices.find((v) => v.name === e.target.value);
+    if (!voice) return;
+    setVoice(voice);
   };
 
-  const handlePitchChange = (event) => {
-    setPitch(parseFloat(event.target.value));
+  const handlePitchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setPitch(parseFloat(e.target.value));
   };
 
-  const handleRateChange = (event) => {
-    setRate(parseFloat(event.target.value));
+  const handleRateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRate(parseFloat(e.target.value));
   };
 
-  const handleVolumeChange = (event) => {
-    setVolume(parseFloat(event.target.value));
+  const handleVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setVolume(parseFloat(e.target.value));
   };
 
   return (
     <main className="p-24">
-      <AudioRecorder
-        onRecordingComplete={uploadAudio}
-        audioTrackConstraints={{
-          noiseSuppression: true,
-          echoCancellation: true,
-        }}
-        downloadFileExtension="webm"
-      />
-
       <form action={formAction}>
-        <input type="file" name="audio" ref={fileRef} />
-
+        <input type="file" name="audio" ref={fileRef} hidden />
         <Recorder uploadAudio={uploadAudio} />
-
         <SubmitButton />
         <button type="submit" hidden ref={submitButtonRef} />
       </form>

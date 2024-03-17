@@ -11,7 +11,6 @@ const mimeType = "audio/webm";
 function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const { pending } = useFormStatus();
-
   const [permission, setPermission] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recordingStatus, setRecordingStatus] = useState("inactive");
@@ -80,50 +79,47 @@ function Recorder({ uploadAudio }: { uploadAudio: (blob: Blob) => void }) {
   };
 
   return (
-    <div className="audio-controls">
+    <div className="flex items-center justify-center">
       {!permission ? (
         <button onClick={getMicrophonePermission} type="button">
           Get Microphone
         </button>
       ) : null}
 
-      {permission && recordingStatus === "inactive" ? (
+      {pending && (
+        <Image
+          src={activeAssistantIcon}
+          alt="Recording"
+          width={350}
+          height={350}
+          onClick={stopRecording}
+          priority={true}
+          className="assistant grayscale"
+        />
+      )}
+
+      {permission && recordingStatus === "inactive" && !pending ? (
         <Image
           src={notActiveAssistantIcon}
           alt="Not Recording"
-          width={500}
-          height={500}
+          width={350}
+          height={350}
           onClick={startRecording}
           priority={true}
-          className={`cursor-pointer 
-
-          ${
-            pending
-              ? "animate-pulse grayscale"
-              : "grayscale-0 hover:scale-110 duration-150 transition-all ease-in-out"
-          }`}
+          className="assistant cursor-pointer hover:scale-110 duration-150 transition-all ease-in-out"
         />
       ) : null}
       {recordingStatus === "recording" ? (
         <Image
           src={activeAssistantIcon}
           alt="Recording"
-          width={500}
-          height={500}
+          width={350}
+          height={350}
           onClick={stopRecording}
           priority={true}
-          className="cursor-pointer hover:scale-110 duration-150 transition-all ease-in-out"
+          className="assistant cursor-pointer hover:scale-110 duration-150 transition-all ease-in-out"
         />
       ) : null}
-
-      {/* {audio ? (
-        <div className="audio-container">
-          <audio src={audio} controls></audio>
-          <a download href={audio}>
-            Download Recording
-          </a>
-        </div>
-      ) : null} */}
     </div>
   );
 }

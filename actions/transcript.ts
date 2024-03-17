@@ -9,6 +9,8 @@ import {
 async function transcript(prevState: any, formData: FormData) {
   "use server";
 
+  const id = Math.random().toString(36);
+
   console.log("PREVIOUS STATE:", prevState);
   if (
     process.env.AZURE_API_KEY === undefined ||
@@ -36,6 +38,8 @@ async function transcript(prevState: any, formData: FormData) {
   const arrayBuffer = await file.arrayBuffer();
   const audio = new Uint8Array(arrayBuffer);
 
+  // ---   get audio transcription from Azure OpenAI Whisper ----
+
   console.log("== Transcribe Audio Sample ==");
 
   const client = new OpenAIClient(
@@ -49,7 +53,7 @@ async function transcript(prevState: any, formData: FormData) {
   );
   console.log(`Transcription: ${result.text}`);
 
-  // ---   get chat completion from OpenAI ----
+  // ---   get chat completion from Azure OpenAI ----
 
   const messages: ChatRequestMessage[] = [
     {
@@ -58,11 +62,6 @@ async function transcript(prevState: any, formData: FormData) {
         "You are a helpful assistant. You will answer questions and reply I cannot answer that if you dont know the answer.",
     },
     { role: "user", content: result.text },
-    // {
-    //   role: "assistant",
-    //   content: "Arrrr! Of course, me hearty! What can I do for ye?",
-    // },
-    // { role: "user", content: "What's the best way to train a parrot?" },
   ];
 
   console.log(`Messages: ${messages.map((m) => m.content).join("\n")}`);
@@ -76,20 +75,12 @@ async function transcript(prevState: any, formData: FormData) {
   console.log("chatbot: ", completions.choices[0].message?.content);
 
   const response = completions.choices[0].message?.content;
-  //   for await (const event of events) {
-  //     for (const choice of event.choices) {
-  //       const delta = choice.delta?.content;
-  //       if (delta !== undefined) {
-  //         console.log(`Chatbot: ${delta}`);
-  //       }
-  //     }
-  //   }
-  //   ------
 
   console.log(prevState.sender, "+++", result.text);
   return {
     sender: result.text,
     response: response,
+    id: id,
   };
 }
 

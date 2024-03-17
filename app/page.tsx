@@ -1,55 +1,46 @@
 "use client";
 
 import transcript from "@/actions/transcript";
-import SubmitButton from "@/components/SubmitButton";
 import { useFormState } from "react-dom";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Recorder from "@/components/Recorder";
-import TextToSpeech from "@/components/TextToSpeech";
+import VoiceSynthesizer from "@/components/VoiceSynthesizer";
+import Messages from "@/components/Messages";
+import { SettingsIcon } from "lucide-react";
+import Image from "next/image";
 
 const initialState = {
   sender: "",
   response: "",
+  id: "",
 };
 
-type Message = {
+export type Message = {
   sender: string;
   response: string;
+  id: string;
 };
-
-// const TIME_PER_KB = 0.007576; // Estimated seconds per kilobyte
 
 export default function Home() {
   const [state, formAction] = useFormState(transcript, initialState);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const submitButtonRef = useRef<HTMLButtonElement | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [displaySettings, setDisplaySettings] = useState(false);
 
-  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const [pitch, setPitch] = useState(1);
-  const [rate, setRate] = useState(1);
-  const [volume, setVolume] = useState(1);
-
-  console.log("state", state);
-
+  // Responsible for updating the messages when the Server Action completes
   useEffect(() => {
-    const voices = window.speechSynthesis.getVoices();
-    setVoice(voices[0]);
-  }, []);
-
-  useEffect(() => {
-    if (state) {
+    if (state.response && state.sender) {
       setMessages((messages) => [
-        ...messages,
         {
           sender: state.sender || "",
           response: state.response || "",
+          id: state.id || "",
         },
+        ...messages,
       ]);
     }
   }, [state]);
-
-  console.log(state);
 
   const uploadAudio = (blob: Blob) => {
     const url = URL.createObjectURL(blob);
@@ -74,122 +65,41 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const synth = window.speechSynthesis;
-
-    if (!state.response) return;
-
-    const wordsToSay = new SpeechSynthesisUtterance(state.response);
-
-    wordsToSay.voice = voice;
-    wordsToSay.pitch = pitch;
-    wordsToSay.rate = rate;
-    wordsToSay.volume = volume;
-    synth.speak(wordsToSay);
-
-    return () => {
-      synth.cancel();
-    };
-  }, [state]);
-
-  const handleVoiceChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const voices = window.speechSynthesis.getVoices();
-    const voice = voices.find((v) => v.name === e.target.value);
-    if (!voice) return;
-    setVoice(voice);
-  };
-
-  const handlePitchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPitch(parseFloat(e.target.value));
-  };
-
-  const handleRateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setRate(parseFloat(e.target.value));
-  };
-
-  const handleVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setVolume(parseFloat(e.target.value));
-  };
+  console.log(messages);
 
   return (
-    <main className="p-24">
-      <form action={formAction}>
+    <main className="bg-black h-screen overflow-y-scroll">
+      <header className="flex fixed top-0 justify-between text-white w-full p-5">
+        <Image
+          src="https://i.imgur.com/MCHWJZS.png
+          "
+          alt="Logo"
+          width={50}
+          height={50}
+        />
+
+        <SettingsIcon
+          className="p-2 m-2 rounded-full cursor-pointer bg-purple-600 text-black transition-all ease-in-out duration-150 hover:bg-purple-700 hover:text-white"
+          onClick={() => setDisplaySettings(!displaySettings)}
+          size={40}
+        />
+      </header>
+
+      <form action={formAction} className="flex flex-col bg-black">
+        <div className="flex-1 bg-gradient-to-b from-purple-500 to-black">
+          <Messages messages={messages} />
+        </div>
+
         <input type="file" name="audio" ref={fileRef} hidden />
-        <Recorder uploadAudio={uploadAudio} />
-        <SubmitButton />
         <button type="submit" hidden ref={submitButtonRef} />
+
+        <div className="fixed bottom-0 w-full overflow-hidden bg-black rounded-t-3xl">
+          <Recorder uploadAudio={uploadAudio} />
+          <div className="">
+            <VoiceSynthesizer state={state} displaySettings={displaySettings} />
+          </div>
+        </div>
       </form>
-
-      {state.response && (
-        <div className="p-10">
-          <h2 className="font-bold text-3xl mb-3">Transcription</h2>
-          <p>{state.response}</p>
-        </div>
-      )}
-
-      {messages.length > 0 && (
-        <div className="p-10">
-          <h2 className="font-bold text-3xl mb-3">Transcription History</h2>
-          <ul>
-            {messages.map((message, i) => (
-              <li key={i}>
-                {message.sender} <br /> {message.response}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <label>
-        Voice:
-        <select value={voice?.name} onChange={handleVoiceChange}>
-          {window.speechSynthesis.getVoices().map((voice) => (
-            <option key={voice.name} value={voice.name}>
-              {voice.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div>
-        <label>
-          Pitch:
-          <input
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={pitch}
-            onChange={handlePitchChange}
-          />
-        </label>
-
-        <label>
-          Speed:
-          <input
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={rate}
-            onChange={handleRateChange}
-          />
-        </label>
-        <br />
-        <label>
-          Volume:
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={volume}
-            onChange={handleVolumeChange}
-          />
-        </label>
-      </div>
-
-      <TextToSpeech text="HEllo World this is cool" />
     </main>
   );
 }
